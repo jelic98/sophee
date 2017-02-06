@@ -3,8 +3,11 @@
     <output-path>$PROJECT_DIR$/out/artifacts/Sophee_jar</output-path>
     <root id="archive" name="Sophee.jar">
       <element id="module-output" name="Sophee" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jl1.0.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-logging-1.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/mp3plugin.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/tritonus-share-0.3.7-2.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/JNativeHook.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/basicplayer3.0.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

@@ -9,8 +9,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="JNativeHook" level="project" />
     <orderEntry type="library" name="basicplayer3.0" level="project" />
-    <orderEntry type="library" name="jl1.0.1" level="project" />
-    <orderEntry type="library" name="mp3spi1.9.5" level="project" />
-    <orderEntry type="library" name="java" level="project" />
+    <orderEntry type="library" name="commons-logging-1.2" level="project" />
+    <orderEntry type="library" name="mp3plugin" level="project" />
+    <orderEntry type="library" name="tritonus-share-0.3.7-2" level="project" />
   </component>
 </module>

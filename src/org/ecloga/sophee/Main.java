@@ -15,6 +15,8 @@ public class Main extends JFrame implements NativeKeyListener {
 
     private BasicPlayer player;
     private BasicController control;
+    private boolean paused;
+    private JLabel lblStatus;
 
     public Main() {
         setTitle("Sophee");
@@ -40,15 +42,30 @@ public class Main extends JFrame implements NativeKeyListener {
         btnStart.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if(control != null) {
+                    try {
+                        control.stop();
+                    }catch(BasicPlayerException e1) {
+                        JOptionPane.showMessageDialog(null, e1.getMessage());
+                    }
+                }
+
+                paused = true;
+                setStatus();
+
                 getFile();
             }
         });
+
+        lblStatus = new JLabel("STATUS");
+        lblStatus.setHorizontalAlignment(SwingConstants.CENTER);
 
         JLabel lblAuthor = new JLabel("Made with <3 by Ecloga Apps");
         lblAuthor.setHorizontalAlignment(SwingConstants.CENTER);
 
         panel.add(btnStart, BorderLayout.NORTH);
-        panel.add(lblAuthor, BorderLayout.CENTER);
+        panel.add(lblStatus, BorderLayout.CENTER);
+        panel.add(lblAuthor, BorderLayout.SOUTH);
 
         setContentPane(panel);
 
@@ -104,21 +121,52 @@ public class Main extends JFrame implements NativeKeyListener {
         try {
             control.open(file);
             control.play();
-            control.setGain(0.85);
-            control.setPan(0.0);
         }catch(BasicPlayerException e) {
             JOptionPane.showMessageDialog(null, e.getMessage());
         }
     }
 
     @Override
-    public void nativeKeyPressed(NativeKeyEvent nativeKeyEvent) {
+    public void nativeKeyPressed(NativeKeyEvent nativeKeyEvent) {}
+    @Override
+    public void nativeKeyReleased(NativeKeyEvent nativeKeyEvent) {}
 
+    private void setStatus() {
+        if(paused) {
+            lblStatus.setText("PAUSED");
+        }else {
+            lblStatus.setText("PLAYING");
+        }
     }
 
     @Override
-    public void nativeKeyReleased(NativeKeyEvent nativeKeyEvent) {}
-    @Override
-    public void nativeKeyTyped(NativeKeyEvent nativeKeyEvent) {}
+    public void nativeKeyTyped(NativeKeyEvent nativeKeyEvent) {
+        if(paused) {
+            try {
+                control.resume();
+                paused = false;
+                setStatus();
+            } catch (BasicPlayerException e) {
+                e.printStackTrace();
+            }
 
+            for(int i = 3; i >= 0; i--) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                if(i == 0) {
+                    try {
+                        control.pause();
+                        paused = true;
+                        setStatus();
+                    }catch(BasicPlayerException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
 }
