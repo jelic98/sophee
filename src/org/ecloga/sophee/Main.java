@@ -15,8 +15,15 @@ public class Main extends JFrame implements NativeKeyListener {
 
     private BasicPlayer player;
     private BasicController control;
-    private boolean paused;
     private JLabel lblStatus;
+    private CustomTimer thread;
+
+    private static enum PlayerStatus {
+        PLAYING,
+        PAUSED,
+        NO_TRACK,
+        READY
+    }
 
     public Main() {
         setTitle("Sophee");
@@ -50,14 +57,11 @@ public class Main extends JFrame implements NativeKeyListener {
                     }
                 }
 
-                paused = true;
-                setStatus();
-
                 getFile();
             }
         });
 
-        lblStatus = new JLabel("STATUS");
+        lblStatus = new JLabel();
         lblStatus.setHorizontalAlignment(SwingConstants.CENTER);
 
         JLabel lblAuthor = new JLabel("Made with <3 by Ecloga Apps");
@@ -76,6 +80,8 @@ public class Main extends JFrame implements NativeKeyListener {
         }
 
         GlobalScreen.getInstance().addNativeKeyListener(this);
+
+        setStatus(PlayerStatus.NO_TRACK);
     }
 
     public static void main(String[] args) {
@@ -114,6 +120,10 @@ public class Main extends JFrame implements NativeKeyListener {
         }
     }
 
+    private void setStatus(PlayerStatus status) {
+        lblStatus.setText(status.name());
+    }
+
     public void play(File file) {
         player = new BasicPlayer();
         control = (BasicController) player;
@@ -121,6 +131,9 @@ public class Main extends JFrame implements NativeKeyListener {
         try {
             control.open(file);
             control.play();
+            control.pause();
+
+            setStatus(PlayerStatus.READY);
         }catch(BasicPlayerException e) {
             JOptionPane.showMessageDialog(null, e.getMessage());
         }
@@ -131,28 +144,46 @@ public class Main extends JFrame implements NativeKeyListener {
     @Override
     public void nativeKeyReleased(NativeKeyEvent nativeKeyEvent) {}
 
-    private void setStatus() {
-        if(paused) {
-            lblStatus.setText("PAUSED");
-        }else {
-            lblStatus.setText("PLAYING");
-        }
-    }
-
     @Override
     public void nativeKeyTyped(NativeKeyEvent nativeKeyEvent) {
-        if(paused) {
-            try {
-                control.resume();
-                paused = false;
-                setStatus();
-            } catch (BasicPlayerException e) {
-                e.printStackTrace();
-            }
+        if(thread != null && thread.isRunning()) {
+            thread.finish();
+        }
 
-            for(int i = 3; i >= 0; i--) {
+        thread = new CustomTimer();
+
+        try {
+            control.resume();
+            setStatus(PlayerStatus.PLAYING);
+        } catch (BasicPlayerException e) {
+            e.printStackTrace();
+        }
+
+        thread.start();
+    }
+
+    private class CustomTimer extends Thread {
+
+        private boolean running;
+
+        @Override
+        public synchronized void start() {
+            super.start();
+
+            running = true;
+        }
+
+        @Override
+        public void run() {
+            super.run();
+
+            for(int i = 30; i >= 0; i--) {
+                if(!running) {
+                    break;
+                }
+
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -160,13 +191,20 @@ public class Main extends JFrame implements NativeKeyListener {
                 if(i == 0) {
                     try {
                         control.pause();
-                        paused = true;
-                        setStatus();
+                        setStatus(PlayerStatus.PAUSED);
                     }catch(BasicPlayerException e) {
                         e.printStackTrace();
                     }
                 }
             }
+        }
+
+        private void finish() {
+            running = false;
+        }
+
+        private boolean isRunning() {
+            return running;
         }
     }
 }
