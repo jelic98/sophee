@@ -17,6 +17,7 @@ public class Main extends JFrame implements NativeKeyListener {
     private BasicController control;
     private JLabel lblStatus;
     private CustomTimer thread;
+    private VolumeIncreaser increaser;
 
     private static enum PlayerStatus {
         PLAYING,
@@ -148,9 +149,18 @@ public class Main extends JFrame implements NativeKeyListener {
     public void nativeKeyTyped(NativeKeyEvent nativeKeyEvent) {
         if(thread != null && thread.isRunning()) {
             thread.finish();
-        }
+            thread = new CustomTimer();
+            thread.start();
+        }else {
+            try {
+                control.setGain(0.0);
+            } catch (BasicPlayerException e) {
+                e.printStackTrace();
+            }
 
-        thread = new CustomTimer();
+            increaser = new VolumeIncreaser();
+            increaser.start();
+        }
 
         try {
             control.resume();
@@ -158,8 +168,40 @@ public class Main extends JFrame implements NativeKeyListener {
         } catch (BasicPlayerException e) {
             e.printStackTrace();
         }
+    }
 
-        thread.start();
+    private class VolumeIncreaser extends CustomTimer {
+
+        @Override
+        public void run() {
+            thread = new CustomTimer();
+
+            double currentGain = 0.0;
+
+            for (int i = 20; i >= 0; i--) {
+                currentGain += 0.05;
+
+                try {
+                    control.setGain(currentGain);
+                } catch (BasicPlayerException e) {
+                    e.printStackTrace();
+                }
+
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            try {
+                control.setGain(1.0);
+            } catch (BasicPlayerException e) {
+                e.printStackTrace();
+            }
+
+            thread.start();
+        }
     }
 
     private class CustomTimer extends Thread {
@@ -177,9 +219,19 @@ public class Main extends JFrame implements NativeKeyListener {
         public void run() {
             super.run();
 
-            for(int i = 30; i >= 0; i--) {
+            double currentGain = 1.0;
+
+            for(int i = 20; i >= 0; i--) {
                 if(!running) {
                     break;
+                }
+
+                currentGain -= 0.05;
+
+                try {
+                    control.setGain(currentGain);
+                } catch (BasicPlayerException e) {
+                    e.printStackTrace();
                 }
 
                 try {
@@ -195,15 +247,23 @@ public class Main extends JFrame implements NativeKeyListener {
                     }catch(BasicPlayerException e) {
                         e.printStackTrace();
                     }
+
+                    try {
+                        control.setGain(0.0);
+                    } catch (BasicPlayerException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
+
+            finish();
         }
 
-        private void finish() {
+        protected void finish() {
             running = false;
         }
 
-        private boolean isRunning() {
+        protected boolean isRunning() {
             return running;
         }
     }
