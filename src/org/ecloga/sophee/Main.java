@@ -201,6 +201,8 @@ public class Main extends JFrame implements NativeKeyListener {
             }
 
             thread.start();
+
+            finish();
         }
     }
 
