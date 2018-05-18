@@ -11,22 +11,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
-public class Main extends JFrame implements NativeKeyListener {
+public class Sophee extends JFrame implements NativeKeyListener {
 
-    private BasicPlayer player;
     private BasicController control;
     private JLabel lblStatus;
-    private CustomTimer thread;
-    private VolumeIncreaser increaser;
+    private VolumeDecreaser decreaser;
 
-    private static enum PlayerStatus {
+    private enum PlayerStatus {
         PLAYING,
         PAUSED,
         NO_TRACK,
         READY
     }
 
-    public Main() {
+    public Sophee() {
         setTitle("Sophee");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
@@ -45,15 +43,15 @@ public class Main extends JFrame implements NativeKeyListener {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
 
-        JButton btnStart = new JButton("Play some sh*t");
-        btnStart.setPreferredSize(new Dimension(buttonWidth, buttonHeigth));
-        btnStart.addActionListener(new ActionListener() {
+        JButton btnOpen = new JButton("Open");
+        btnOpen.setPreferredSize(new Dimension(buttonWidth, buttonHeigth));
+        btnOpen.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(control != null) {
+                if (control != null) {
                     try {
                         control.stop();
-                    }catch(BasicPlayerException e1) {
+                    } catch (BasicPlayerException e1) {
                         JOptionPane.showMessageDialog(null, e1.getMessage());
                     }
                 }
@@ -68,7 +66,7 @@ public class Main extends JFrame implements NativeKeyListener {
         JLabel lblAuthor = new JLabel("Made with <3 by Ecloga Apps");
         lblAuthor.setHorizontalAlignment(SwingConstants.CENTER);
 
-        panel.add(btnStart, BorderLayout.NORTH);
+        panel.add(btnOpen, BorderLayout.NORTH);
         panel.add(lblStatus, BorderLayout.CENTER);
         panel.add(lblAuthor, BorderLayout.SOUTH);
 
@@ -86,7 +84,7 @@ public class Main extends JFrame implements NativeKeyListener {
     }
 
     public static void main(String[] args) {
-        new Main().setVisible(true);
+        new Sophee().setVisible(true);
     }
 
     private void getFile() {
@@ -125,9 +123,8 @@ public class Main extends JFrame implements NativeKeyListener {
         lblStatus.setText(status.name());
     }
 
-    public void play(File file) {
-        player = new BasicPlayer();
-        control = (BasicController) player;
+    private void play(File file) {
+        control = new BasicPlayer();
 
         try {
             control.open(file);
@@ -147,10 +144,8 @@ public class Main extends JFrame implements NativeKeyListener {
 
     @Override
     public void nativeKeyTyped(NativeKeyEvent nativeKeyEvent) {
-        if(thread != null && thread.isRunning()) {
-            thread.finish();
-            thread = new CustomTimer();
-            thread.start();
+        if(decreaser != null && decreaser.isRunning()) {
+            decreaser.reset();
         }else {
             try {
                 control.setGain(0.0);
@@ -158,8 +153,7 @@ public class Main extends JFrame implements NativeKeyListener {
                 e.printStackTrace();
             }
 
-            increaser = new VolumeIncreaser();
-            increaser.start();
+            new VolumeIncreaser().start();
         }
 
         try {
@@ -170,11 +164,16 @@ public class Main extends JFrame implements NativeKeyListener {
         }
     }
 
+    private void decreaseVolume() {
+        decreaser = new VolumeDecreaser();
+        decreaser.start();
+    }
+
     private class VolumeIncreaser extends CustomTimer {
 
         @Override
         public void run() {
-            thread = new CustomTimer();
+            decreaseVolume();
 
             double currentGain = 0.0;
 
@@ -200,31 +199,20 @@ public class Main extends JFrame implements NativeKeyListener {
                 e.printStackTrace();
             }
 
-            thread.start();
+            decreaser.start();
 
             finish();
         }
     }
 
-    private class CustomTimer extends Thread {
-
-        private boolean running;
-
-        @Override
-        public synchronized void start() {
-            super.start();
-
-            running = true;
-        }
+    private class VolumeDecreaser extends CustomTimer {
 
         @Override
         public void run() {
-            super.run();
-
             double currentGain = 1.0;
 
             for(int i = 20; i >= 0; i--) {
-                if(!running) {
+                if(!isRunning()) {
                     break;
                 }
 
@@ -261,6 +249,23 @@ public class Main extends JFrame implements NativeKeyListener {
             finish();
         }
 
+        public void reset() {
+            finish();
+            start();
+        }
+    }
+
+    private abstract class CustomTimer extends Thread {
+
+        private boolean running;
+
+        @Override
+        public synchronized void start() {
+            super.start();
+
+            running = true;
+        }
+
         protected void finish() {
             running = false;
         }
@@ -268,5 +273,8 @@ public class Main extends JFrame implements NativeKeyListener {
         protected boolean isRunning() {
             return running;
         }
+
+        @Override
+        public abstract void run();
     }
 }
